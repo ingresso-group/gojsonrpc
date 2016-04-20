@@ -62,7 +62,7 @@ func (service *Service) RegisterMethod(name string, method MethodInterface) (err
 
 func (service *Service) handleRequest(request requestData, response *responseData, rawRequest *http.Request, wg *sync.WaitGroup, start time.Time) {
 	defer wg.Done()
-	raven.CapturePanic(func() {
+	errContext, errID := raven.CapturePanic(func() {
 		method, ok := service.methods[request.Method]
 
 		if !ok {
@@ -110,11 +110,27 @@ func (service *Service) handleRequest(request requestData, response *responseDat
 		fmt.Printf("method %s responded in %s\n", request.Method, end.Sub(start))
 		return
 	}, map[string]string{"method": request.Method})
+	if errID != "" {
+		response.Error = &responseError{
+			Code: -32700,
+			Message: fmt.Sprintf(
+				"rpc: panic occured and reported to sentry: %s", errID,
+			),
+		}
+		switch errVal := errContext.(type) {
+		case nil:
+			break
+		case error:
+			response.Error.Data = errVal.Error()
+		default:
+			response.Error.Data = fmt.Sprint(errVal)
+		}
+	}
 }
 
 func (service *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	raven.CapturePanic(func() {
-		w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
+	errContext, errID := raven.CapturePanic(func() {
 		start := time.Now()
 
 		if r.Method != "POST" {
@@ -213,4 +229,26 @@ func (service *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			r.UserAgent(), r.RemoteAddr, end.Sub(start),
 		)
 	}, nil)
+	if errID != "" {
+		w.WriteHeader(http.StatusInternalServerError)
+		errR := responseData{
+			Version: "2.0",
+			Error: &responseError{
+				Code: -32700,
+				Message: fmt.Sprintf(
+					"rpc: panic occured and reported to sentry: %s", errID,
+				),
+			},
+		}
+		switch errVal := errContext.(type) {
+		case nil:
+			break
+		case error:
+			errR.Error.Data = errVal.Error()
+		default:
+			errR.Error.Data = fmt.Sprint(errVal)
+		}
+		data, _ := json.Marshal(errR)
+		w.Write(data)
+	}
 }
