@@ -243,7 +243,7 @@ func TestServiceServeHTTP(t *testing.T) {
 				})
 
 				Convey("Then the response body should be the results of the request", func() {
-					expected := `[{"id":"1","jsonrpc":"2.0","result":{"I LIKE BEANS":"foo","bar":"I LIKE 10 BARS"}},{"id":2,"jsonrpc":"2.0","result":{"BEANS I LIKE":"foo","bar":"I LIKE 99 BARS"}}]`
+					expected := `[{"id":"1","jsonrpc":"2.0","result":{"I LIKE BEANS":"foo","bar":"I LIKE 10 BARS"}},{"id":"2","jsonrpc":"2.0","result":{"BEANS I LIKE":"foo","bar":"I LIKE 99 BARS"}}]`
 					So(response.Body(), ShouldEqual, expected)
 				})
 
