@@ -12,21 +12,18 @@ type Client struct {
 	addr       string
 	httpclient *http.Client
 	Debug      bool
-	username   string
-	password   string
 }
 
-func NewClient(addr string, username string, password string) (client *Client) {
+func NewClient(addr string) (client *Client) {
 	client = &Client{
 		addr:       addr,
-		username:   username,
-		password:   password,
 		httpclient: new(http.Client),
 	}
 	return
 }
 
-func (client Client) Call(method string, params interface{}, results interface{}) (err error) {
+func (client Client) Call(method string, username string, password string,
+	params interface{}, results interface{}) (err error) {
 	request := requestData{
 		Id:      "1",
 		Version: "2.0",
@@ -42,8 +39,8 @@ func (client Client) Call(method string, params interface{}, results interface{}
 		fmt.Printf("REQUEST: %s\n", string(reqBytes))
 	}
 	req, err := http.NewRequest("POST", client.addr, bytes.NewBuffer(reqBytes))
-	if client.username != "" {
-		req.SetBasicAuth(client.username, client.password)
+	if username != "" {
+		req.SetBasicAuth(username, password)
 	}
 	resp, err := client.httpclient.Do(req)
 	if err != nil {
