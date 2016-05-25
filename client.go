@@ -39,6 +39,7 @@ func (client Client) Call(method string, username string, password string,
 		fmt.Printf("REQUEST: %s\n", string(reqBytes))
 	}
 	req, err := http.NewRequest("POST", client.addr, bytes.NewBuffer(reqBytes))
+	req.Header.Set("Content-Type", "application/json")
 	if username != "" || password != "" {
 		req.SetBasicAuth(username, password)
 	}
