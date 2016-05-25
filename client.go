@@ -37,6 +37,9 @@ func (client Client) Call(method string, params interface{}, results interface{}
 		fmt.Printf("REQUEST: %s\n", string(reqBytes))
 	}
 	req, err := http.NewRequest("POST", client.addr, bytes.NewBuffer(reqBytes))
+	if err != nil {
+		return err
+	}
 
 	resp, err := client.httpclient.Do(req)
 	if err != nil {
