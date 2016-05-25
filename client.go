@@ -15,13 +15,15 @@ type Client struct {
 }
 
 func NewClient(addr string) (client *Client) {
-	client = new(Client)
-	client.addr = addr
-	client.httpclient = new(http.Client)
+	client = &Client{
+		addr:       addr,
+		httpclient: new(http.Client),
+	}
 	return
 }
 
-func (client Client) Call(method string, params interface{}, results interface{}) (err error) {
+func (client Client) Call(method string, username string, password string,
+	params interface{}, results interface{}) (err error) {
 	request := requestData{
 		Id:      "1",
 		Version: "2.0",
@@ -37,7 +39,9 @@ func (client Client) Call(method string, params interface{}, results interface{}
 		fmt.Printf("REQUEST: %s\n", string(reqBytes))
 	}
 	req, err := http.NewRequest("POST", client.addr, bytes.NewBuffer(reqBytes))
-
+	if username != "" || password != "" {
+		req.SetBasicAuth(username, password)
+	}
 	resp, err := client.httpclient.Do(req)
 	if err != nil {
 		return err
