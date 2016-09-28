@@ -78,12 +78,11 @@ func (response *fakeResponse) Body() string {
 
 func TestServiceServeHTTP(t *testing.T) {
 	Convey("Given a service with two methods `FooBar` and `BarFoo`", t, func() {
-		service := Service{
-			methods: map[string]MethodInterface{
-				"FooBar": &fakeMethod{id: "foo"},
-				"BarFoo": &fakeMethod{id: "foo"},
-			},
-		}
+		service := NewService()
+
+		service.RegisterMethod("FooBar", &fakeMethod{id: "foo"})
+		service.RegisterMethod("BarFoo", &fakeMethod{id: "foo"})
+
 		Convey("Given an http request containing an invalid body", func() {
 			request := http.Request{
 				Method: "POST",

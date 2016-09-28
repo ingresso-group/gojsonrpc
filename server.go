@@ -3,11 +3,13 @@ package jsonrpc
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/getsentry/raven-go"
 	"io/ioutil"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/getsentry/raven-go"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type responseError struct {
@@ -40,15 +42,36 @@ type MethodInterface interface {
 }
 
 type Service struct {
-	methods map[string]MethodInterface
-	accept  []string
+	methods        map[string]MethodInterface
+	accept         []string
+	callSummary    *prometheus.SummaryVec
+	requestSummary *prometheus.SummaryVec
 }
 
-func NewService() (service *Service) {
-	service = new(Service)
-	service.methods = map[string]MethodInterface{}
-	service.accept = []string{"application/json", "text/json"}
-	return
+func NewService() *Service {
+	calls := prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name: "rpc_call_duration_microseconds",
+			Help: "The duration of rpc method calls to the service",
+		},
+		[]string{"method", "error_code"},
+	)
+	requests := prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name: "rpc_request_duration_microseconds",
+			Help: "The duration of rpc requests to the service",
+		},
+		[]string{"error_code"},
+	)
+	prometheus.Register(calls)
+	prometheus.Register(requests)
+	service := &Service{
+		methods:        map[string]MethodInterface{},
+		accept:         []string{"application/json", "text/json"},
+		callSummary:    calls,
+		requestSummary: requests,
+	}
+	return service
 }
 
 func (service *Service) RegisterMethod(name string, method MethodInterface) (err error) {
@@ -60,12 +83,25 @@ func (service *Service) RegisterMethod(name string, method MethodInterface) (err
 	return
 }
 
-func (service *Service) handleRequest(request requestData, response *responseData, rawRequest *http.Request, wg *sync.WaitGroup, start time.Time) {
-	defer wg.Done()
+func (service *Service) recordCall(method string, start time.Time, code int) {
+	now := time.Now()
+	duration := now.Sub(start)
+	cs := fmt.Sprintf("%d", code)
+	df := float64(duration) / float64(time.Microsecond)
+	service.callSummary.WithLabelValues(method, cs).Observe(df)
+}
+
+func (service *Service) handleCall(request requestData, response *responseData, rawRequest *http.Request, wg *sync.WaitGroup, start time.Time) {
+	var errCode int
+	defer func() {
+		wg.Done()
+		service.recordCall(request.Method, start, errCode)
+	}()
 	errContext, errID := raven.CapturePanic(func() {
 		method, ok := service.methods[request.Method]
 
 		if !ok {
+			errCode = -32601
 			response.Error = &responseError{
 				Code:    -32601,
 				Message: fmt.Sprintf("rpc: Method name `%s` does not exist", request.Method),
@@ -78,6 +114,7 @@ func (service *Service) handleRequest(request requestData, response *responseDat
 		err = json.Unmarshal(paramData, params)
 
 		if err != nil {
+			errCode = -32602
 			response.Error = &responseError{
 				Code:    -32602,
 				Message: err.Error(),
@@ -88,6 +125,7 @@ func (service *Service) handleRequest(request requestData, response *responseDat
 		err = params.Validate()
 
 		if err != nil {
+			errCode = -32602
 			response.Error = &responseError{
 				Code:    -32602,
 				Message: err.Error(),
@@ -98,6 +136,7 @@ func (service *Service) handleRequest(request requestData, response *responseDat
 		result, err := method.Action(rawRequest, params)
 
 		if err != nil {
+			errCode = -32603
 			response.Error = &responseError{
 				Code:    -32603,
 				Message: err.Error(),
@@ -111,6 +150,7 @@ func (service *Service) handleRequest(request requestData, response *responseDat
 		return
 	}, map[string]string{"method": request.Method})
 	if errID != "" {
+		errCode = -32700
 		response.Error = &responseError{
 			Code: -32700,
 			Message: fmt.Sprintf(
@@ -128,13 +168,26 @@ func (service *Service) handleRequest(request requestData, response *responseDat
 	}
 }
 
+func (service *Service) recordRequest(start time.Time, code int) {
+	now := time.Now()
+	duration := now.Sub(start)
+	cs := fmt.Sprintf("%d", code)
+	df := float64(duration) / float64(time.Microsecond)
+	service.requestSummary.WithLabelValues(cs).Observe(df)
+}
+
 func (service *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	var errCode int
+	defer func() {
+		service.recordRequest(start, errCode)
+	}()
 	w.Header().Set("Content-Type", "application/json")
 	errContext, errID := raven.CapturePanic(func() {
-		start := time.Now()
 
 		if r.Method != "POST" {
 			w.WriteHeader(http.StatusBadRequest)
+			errCode = -32700
 			errR := responseData{
 				Version: "2.0",
 				Error: &responseError{
@@ -154,6 +207,7 @@ func (service *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
+			errCode = -32700
 			errR := responseData{
 				Version: "2.0",
 				Error: &responseError{
@@ -175,6 +229,7 @@ func (service *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			sErr := json.Unmarshal(data, &singleRequest)
 			if sErr != nil {
 				w.WriteHeader(http.StatusBadRequest)
+				errCode = -32700
 				errR := responseData{
 					Version: "2.0",
 					Error: &responseError{
@@ -198,7 +253,7 @@ func (service *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			response.Version = "2.0"
 			responses = append(responses, response)
 			wg.Add(1)
-			go service.handleRequest(request, response, r, &wg, start)
+			go service.handleCall(request, response, r, &wg, start)
 		}
 
 		wg.Wait()
@@ -210,6 +265,7 @@ func (service *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
+			errCode = -32603
 			errR := responseData{
 				Version: "2.0",
 				Error: &responseError{
@@ -231,6 +287,7 @@ func (service *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}, nil)
 	if errID != "" {
 		w.WriteHeader(http.StatusInternalServerError)
+		errCode = -32700
 		errR := responseData{
 			Version: "2.0",
 			Error: &responseError{
