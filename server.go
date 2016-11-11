@@ -246,13 +246,19 @@ func (service *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		var wg sync.WaitGroup
 
+		noRequests := len(requests)
+
 		for _, request := range requests {
 			response := new(responseData)
 			response.Id = request.Id
 			response.Version = "2.0"
 			responses = append(responses, response)
 			wg.Add(1)
-			go service.handleCall(request, response, r, &wg, start)
+			if noRequests == 1 {
+				service.handleCall(request, response, r, &wg, start)
+			} else {
+				go service.handleCall(request, response, r, &wg, start)
+			}
 		}
 
 		wg.Wait()
