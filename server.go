@@ -19,10 +19,10 @@ type responseError struct {
 }
 
 type requestData struct {
-	Id      string      `json:"id"`
-	Version string      `json:"jsonrpc"`
-	Params  interface{} `json:"params"`
-	Method  string      `json:"method"`
+	Id      string          `json:"id"`
+	Version string          `json:"jsonrpc"`
+	Params  json.RawMessage `json:"params"`
+	Method  string          `json:"method"`
 }
 
 type responseData struct {
@@ -110,8 +110,7 @@ func (service *Service) handleCall(request requestData, response *responseData, 
 		}
 
 		params := method.Params()
-		paramData, err := json.Marshal(request.Params)
-		err = json.Unmarshal(paramData, params)
+		err := json.Unmarshal(request.Params, params)
 
 		if err != nil {
 			errCode = -32602

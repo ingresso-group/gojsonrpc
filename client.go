@@ -8,6 +8,13 @@ import (
 	"net/http"
 )
 
+type clientRequestData struct {
+	Id      string      `json:"id"`
+	Version string      `json:"jsonrpc"`
+	Params  interface{} `json:"params"`
+	Method  string      `json:"method"`
+}
+
 type Client struct {
 	addr       string
 	httpclient *http.Client
@@ -24,7 +31,7 @@ func NewClient(addr string) (client *Client) {
 
 func (client Client) Call(method string, username string, password string,
 	params interface{}, results interface{}) (err error) {
-	request := requestData{
+	request := clientRequestData{
 		Id:      "1",
 		Version: "2.0",
 		Params:  params,
