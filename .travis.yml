@@ -7,6 +7,7 @@ before_install:
 - go get github.com/fzipp/gocyclo 
 
 script:
+  - go test ./...
   - go test -cover ./...
   - go tool vet -all .
-  - gocyclo -over 10 .
+  - gocyclo -over 14 .
