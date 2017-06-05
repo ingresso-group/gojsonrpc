@@ -26,6 +26,9 @@ func (err *Error) Error() string {
 
 // Response return the results of the method call to the client in the JSONRPC
 // format.
+//
+// It's fine for ID, Result, and Error to all be nil. For ID in particular, if
+// the Call specified an ID then the Response must include the original ID.
 type Response struct {
 	Version string      `json:"jsonrpc"`
 	ID      interface{} `json:"id"`

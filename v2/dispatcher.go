@@ -9,16 +9,16 @@ import (
 // DefaultDispatcher is the default Dispatcher used for Register and Dispatch
 var DefaultDispatcher = NewMapDispatcher()
 
-// A Dispatcher processes JSONRPC calls from a request.
+// A Dispatcher handles individual JSONRPC method calls.
 //
-// HandleCall should return a Result based on the method and parameters of the
-// Call.
+// The Call argument represents the part of the request concerning this
+// particular method call.
 //
-// When a call fails Dispatch should return a Result containing an Error
+// The target method should write it's response in the Result field of the
+// Response argument. There is no need to return anything.
 //
-// When a method cannot be found that matches the requested the Method in the
-// Call then Dispatch should return a Result containing an Error with the
-// code -32601
+// When a call fails Dispatch should write an Error to the Error field of the
+// Response arguments. There is no need to return anything.
 type Dispatcher interface {
 	Dispatch(*Response, *Call, *http.Request)
 }

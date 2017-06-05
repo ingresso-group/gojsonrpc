@@ -40,7 +40,7 @@ func Multiply (resp *jsonrpc.Response, call *jsonrpc.Call, req *http.Request) {
 
 func main () {
     jsonrpc.Register("add", Add)
-    jsonrpc.Register("add", Multiply)
+    jsonrpc.Register("multiply", Multiply)
     jsonrpc.ListenAndServe("localhost:8000")
 }
 ```

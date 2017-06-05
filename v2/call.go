@@ -6,6 +6,10 @@ import (
 
 // Call contains a target method and the parameters that should be deserilised
 // for that call.
+//
+// Params may not be present
+//
+// Calls without ID are not expecting a Response and may be safely ignored.
 type Call struct {
 	Version string          `json:"jsonrpc"`
 	ID      interface{}     `json:"id"`
