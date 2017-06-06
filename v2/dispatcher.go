@@ -66,7 +66,7 @@ func (dispatcher *MapDispatcher) Dispatch(resp *Response, call *Call, req *http.
 	if !ok {
 		resp.Error = &Error{
 			Code:    CodeMethodNotFound,
-			Message: fmt.Sprintf("jsonrpc: method with name %s not register", call.Method),
+			Message: fmt.Sprintf("jsonrpc: method with name %s not registered", call.Method),
 		}
 		return
 	}
