@@ -62,6 +62,15 @@ func (dispatcher *MapDispatcher) Register(name string, method Method) error {
 //
 // When the method is not found, it returns an error.
 func (dispatcher *MapDispatcher) Dispatch(resp *Response, call *Call, req *http.Request) {
+
+	if call.Method == "" {
+		resp.Error = &Error{
+			Code:    CodeInvalidRequest,
+			Message: fmt.Sprintf("jsonrpc: call with ID %s has no method specified", call.ID),
+		}
+		return
+	}
+
 	method, ok := dispatcher.methods[call.Method]
 	if !ok {
 		resp.Error = &Error{

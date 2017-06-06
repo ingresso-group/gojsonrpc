@@ -45,14 +45,12 @@ func TestServeHTTP(t *testing.T) {
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 
 	body, _ := ioutil.ReadAll(response.Body)
-	var results []Response
-	err := json.Unmarshal(body, &results)
+	var result Response
+	err := json.Unmarshal(body, &result)
 
 	if !assert.Nil(t, err) {
 		t.FailNow()
 	}
-
-	result := results[0]
 
 	assert.Equal(t, "2.0", result.Version)
 	assert.Equal(t, "abc123", result.ID)
@@ -120,4 +118,32 @@ func TestServeHTTP_with_get_request(t *testing.T) {
 	assert.Nil(t, result.Result)
 	assert.Equal(t, CodeInvalidRequest, result.Error.Code)
 	assert.Equal(t, "jsonrpc: rpc calls should be done via a POST request", result.Error.Message)
+}
+
+func TestServeHTTP_with_bad_data(t *testing.T) {
+	dispatcher := &fakeDispatcher{}
+	handler := &Handler{dispatcher}
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	buf := bytes.NewBufferString(`hahahahaha nope!`)
+
+	response, _ := http.Post(server.URL, "application/json", buf)
+
+	assert.Equal(t, "application/json", response.Header.Get("Content-Type"))
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+
+	body, _ := ioutil.ReadAll(response.Body)
+	var result Response
+	err := json.Unmarshal(body, &result)
+
+	if !assert.Nil(t, err) {
+		t.FailNow()
+	}
+
+	assert.Equal(t, result.Version, "2.0")
+	assert.Nil(t, result.ID)
+	assert.Nil(t, result.Result)
+	assert.Equal(t, CodeParseError, result.Error.Code)
+	assert.Equal(t, "invalid character 'h' looking for beginning of value", result.Error.Message)
 }

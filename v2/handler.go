@@ -30,7 +30,7 @@ func serverError(w http.ResponseWriter, message string, code int) {
 		},
 	}
 
-	resp, _ := json.Marshal(&result)
+	resp, _ := Marshal(&result)
 
 	w.Write(resp)
 }
@@ -56,6 +56,7 @@ func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var calls []*Call
+	var single bool
 
 	err = json.Unmarshal(body, &calls)
 
@@ -68,6 +69,7 @@ func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			serverError(w, err.Error(), CodeParseError)
 			return
 		}
+		single = true
 		calls = append(calls, call)
 	}
 
@@ -83,7 +85,12 @@ func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	wg.Wait()
 
-	data, err := json.Marshal(responses)
+	var data []byte
+	if single {
+		data, err = Marshal(responses[0])
+	} else {
+		data, err = Marshal(responses)
+	}
 
 	if err != nil {
 		serverError(w, err.Error(), CodeInternalError)

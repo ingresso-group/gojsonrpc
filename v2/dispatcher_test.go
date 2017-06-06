@@ -55,6 +55,14 @@ func TestMapDispatcher(t *testing.T) {
 
 	dispatcher.Dispatch(resp, call, nil)
 	assert.Equal(t, CodeMethodNotFound, resp.Error.Code)
+
+	call = &Call{
+		Params: json.RawMessage(`"hit and hope!"`),
+	}
+	resp = NewResponse(call)
+
+	dispatcher.Dispatch(resp, call, nil)
+	assert.Equal(t, CodeInvalidRequest, resp.Error.Code)
 }
 
 func TestMapDispatcher_conflict(t *testing.T) {

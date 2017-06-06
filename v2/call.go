@@ -16,3 +16,10 @@ type Call struct {
 	Method  string          `json:"method"`
 	Params  json.RawMessage `json:"params"`
 }
+
+type clientCall struct {
+	Version string      `json:"jsonrpc"`
+	ID      interface{} `json:"id"`
+	Method  string      `json:"method"`
+	Params  interface{} `json:"params"`
+}
