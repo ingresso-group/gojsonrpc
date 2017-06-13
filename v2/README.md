@@ -357,12 +357,12 @@ func main() {
 Error handling in batch requests
 --------------------------------
 
-By default the client will discard errors in the results of a batch request.
+By default the client will return immediately when it encounters and error in
+the results of a batch request.
 
-If you would prefer to have errors returned you can enable this functionality
-on batch by batch basis:
+Errors can be ignored by settings `Batch.DiscardErrors` to `true`
 
 ```golang
 batch := jsonrpc.NewBatch()
-batch.DiscardErrors = false
+batch.DiscardErrors = true
 ```
