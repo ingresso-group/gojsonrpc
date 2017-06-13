@@ -363,6 +363,6 @@ If you would prefer to have errors returned you can enable this functionality
 on batch by batch basis:
 
 ```golang
-	batch := jsonrpc.NewBatch()
-    batch.DiscardErrors = false
+batch := jsonrpc.NewBatch()
+batch.DiscardErrors = false
 ```

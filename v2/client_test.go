@@ -184,6 +184,7 @@ func TestClient_batch_ignoring_errors(t *testing.T) {
 	defer server.Close()
 
 	batch := NewBatch()
+	batch.DiscardErrors = true
 
 	var a, b, c int
 	batch.AddCall("add", []int{1, 2, 3}, &a)

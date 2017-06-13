@@ -30,7 +30,12 @@ func serverError(w http.ResponseWriter, message string, code int) {
 		},
 	}
 
-	resp, _ := Marshal(&result)
+	resp, err := Marshal(&result)
+
+	if err != nil {
+		w.Write([]byte(`{"jsonrpc": "2.0", "id": null, "error": {"code": -32603, "message": "something went wrong!"}}`))
+		return
+	}
 
 	w.Write(resp)
 }

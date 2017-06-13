@@ -30,9 +30,8 @@ func (batch *Batch) nextID() string {
 	return id
 }
 
-func (batch *Batch) resultForID(rawid interface{}) (interface{}, bool) {
-
-	id, ok := rawid.(string)
+func (batch *Batch) resultForID(rawID interface{}) (interface{}, bool) {
+	id, ok := rawID.(string)
 	if !ok {
 		return nil, false
 	}
@@ -40,11 +39,10 @@ func (batch *Batch) resultForID(rawid interface{}) (interface{}, bool) {
 	if !ok {
 		return nil, false
 	}
-
 	return call.result, true
 }
 
-// AddCall adds a call to a batch
+// AddCall adds a call to a Batch.
 func (batch *Batch) AddCall(method string, params interface{}, result interface{}) {
 	batch.mtx.Lock()
 	defer batch.mtx.Unlock()
@@ -103,14 +101,14 @@ func (batch *Batch) NewRequest(url string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewBatch creates a new empty batch for making multiple method calls in one
+// NewBatch creates a new empty Batch for making multiple method calls in one
 // HTTP request.
 func NewBatch() *Batch {
 	batch := &Batch{
 		calls:         make(map[string]*batchCall),
 		id:            1,
 		mtx:           new(sync.Mutex),
-		DiscardErrors: true,
+		DiscardErrors: false,
 	}
 	return batch
 }

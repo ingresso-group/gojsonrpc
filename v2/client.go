@@ -145,13 +145,7 @@ func (client *Client) Call(url string, method string, params interface{}, result
 		return err
 	}
 
-	err = client.do(req, result)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return client.do(req, result)
 }
 
 // NewRequest returns a pointer to a new http.Request containing the call in
