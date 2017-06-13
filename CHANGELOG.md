@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+
+## [0.0.7] - 2017-06-13
+### Moved
+- original implementation into /v1
+
+### Added
+- new implementation under /v2
+
 ## [0.0.6] - 2016-11-11
 ### Added
 - MIT licence
@@ -33,6 +42,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - simple JSON RPC 2.0 server
 
+[Unreleased]: https://github.com/ingresso-group/gojsonrpc/compare/0.0.7...HEAD
+[0.0.7]: https://github.com/ingresso-group/gojsonrpc/compare/0.0.6...0.0.7
 [0.0.6]: https://github.com/ingresso-group/gojsonrpc/compare/0.0.5...0.0.6
 [0.0.5]: https://github.com/ingresso-group/gojsonrpc/compare/0.0.4...0.0.5
 [0.0.4]: https://github.com/ingresso-group/gojsonrpc/compare/0.0.3...0.0.4
