@@ -42,12 +42,12 @@ func (batch *Batch) resultForID(rawID interface{}) (interface{}, bool) {
 	return call.result, true
 }
 
-// AddCall adds a call to a Batch.
-func (batch *Batch) AddCall(method string, params interface{}, result interface{}) {
+// AddCall adds a call to a Batch. Returns the id of the call.
+func (batch *Batch) AddCall(method string, params interface{}, result interface{}) (id string) {
 	batch.mtx.Lock()
 	defer batch.mtx.Unlock()
 
-	id := batch.nextID()
+	id = batch.nextID()
 
 	call := &clientCall{
 		Version: "2.0",
@@ -64,6 +64,8 @@ func (batch *Batch) AddCall(method string, params interface{}, result interface{
 
 	batch.order = append(batch.order, batchCall)
 	batch.calls[id] = batchCall
+
+	return
 }
 
 // NewRequest returns a pointer to a new http.Request containing the calls in

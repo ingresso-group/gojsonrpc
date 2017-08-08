@@ -12,9 +12,12 @@ func TestBatch(t *testing.T) {
 
 	var a, b, c int
 
-	batch.AddCall("add", []int{1, 2, 3}, &a)
-	batch.AddCall("multiply", []int{4, 5, 6}, &b)
-	batch.AddCall("add", []int{7, 8, 9}, &c)
+	id := batch.AddCall("add", []int{1, 2, 3}, &a)
+	assert.Equal(t, "1", id)
+	id = batch.AddCall("multiply", []int{4, 5, 6}, &b)
+	assert.Equal(t, "2", id)
+	id = batch.AddCall("add", []int{7, 8, 9}, &c)
+	assert.Equal(t, "3", id)
 
 	req, err := batch.NewRequest("https://foobar.com")
 
