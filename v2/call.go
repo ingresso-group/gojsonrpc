@@ -17,6 +17,11 @@ type Call struct {
 	Params  json.RawMessage `json:"params"`
 }
 
+// UnmarshalParams unmarshals the calls parameters into the given interface.
+func (call Call) UnmarshalParams(v interface{}) error {
+	return json.Unmarshal(call.Params, v)
+}
+
 type clientCall struct {
 	Version string      `json:"jsonrpc"`
 	ID      interface{} `json:"id"`
