@@ -1,6 +1,6 @@
 module github.com/ingresso-group/gojsonrpc/v2
 
-go 1.12
+go 1.11
 
 require (
 	github.com/certifi/gocertifi v0.0.0-20190415143156-92f724a62f3e // indirect
