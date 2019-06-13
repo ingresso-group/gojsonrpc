@@ -1,4 +1,4 @@
-module github.com/ingresso-group/gojsonrpc
+module github.com/ingresso-group/gojsonrpc/v2
 
 go 1.12
 
