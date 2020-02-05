@@ -120,7 +120,7 @@ func (client *Client) doBatch(req *http.Request, batch *Batch) error {
 // use the NewRequest function to generate a http.Request in the correct format
 // for your method call.
 func (client *Client) Do(req *http.Request, result interface{}) error {
-	ctx, span := trace.StartSpan(req.Context(), "(*Client).Do")
+	ctx, span := trace.StartSpan(req.Context(), "(*jsonrpc.Client).Do")
 	defer span.End()
 
 	methodName, ok := getMethod(ctx)
