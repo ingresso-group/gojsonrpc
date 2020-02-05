@@ -182,10 +182,7 @@ func NewRequest(url string, method string, params interface{}) (*http.Request, e
 
 	buf := bytes.NewBuffer(data)
 
-	ctx := context.Background()
-	ctx = setMethod(ctx, method)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, buf)
+	req, err := http.NewRequest(http.MethodPost, url, buf)
 	if err != nil {
 		return nil, err
 	}
