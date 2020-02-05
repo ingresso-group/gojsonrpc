@@ -2,6 +2,7 @@ package jsonrpc
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 )
 
@@ -10,6 +11,12 @@ var (
 	IndentOutput = true
 	// EscapeHTML controls wether json output is HTML escaped.
 	EscapeHTML = false
+)
+
+type key int
+
+const (
+	methodNameKey key = iota
 )
 
 // Marshal is a custom json marshaller that conditionally turns off html
@@ -32,4 +39,15 @@ func Marshal(v interface{}) ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
+}
+
+// setMethod saves a method name into a context
+func setMethod(ctx context.Context, method string) context.Context {
+	return context.WithValue(ctx, methodNameKey, method)
+}
+
+// getMethod gets the method name from the context
+func getMethod(ctx context.Context) (string, bool) {
+	method, ok := ctx.Value(methodNameKey).(string)
+	return method, ok
 }

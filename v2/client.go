@@ -2,10 +2,13 @@ package jsonrpc
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"go.opencensus.io/trace"
 )
 
 var (
@@ -117,6 +120,16 @@ func (client *Client) doBatch(req *http.Request, batch *Batch) error {
 // use the NewRequest function to generate a http.Request in the correct format
 // for your method call.
 func (client *Client) Do(req *http.Request, result interface{}) error {
+	ctx, span := trace.StartSpan(req.Context(), "(*Client).Do")
+	defer span.End()
+
+	methodName, ok := getMethod(ctx)
+	if ok {
+		span.AddAttributes(
+			trace.StringAttribute("rpc.method", methodName),
+		)
+	}
+
 	return client.do(req, result)
 }
 
@@ -169,7 +182,10 @@ func NewRequest(url string, method string, params interface{}) (*http.Request, e
 
 	buf := bytes.NewBuffer(data)
 
-	req, err := http.NewRequest(http.MethodPost, url, buf)
+	ctx := context.Background()
+	ctx = setMethod(ctx, method)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, buf)
 	if err != nil {
 		return nil, err
 	}
