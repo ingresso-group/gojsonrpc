@@ -195,7 +195,7 @@ func NewRequest(url string, method string, params interface{}) (*http.Request, e
 // the JSONRPC format.
 //
 // The request can then be executed with Client.Do.
-func NewRequestWithContext(ctx, context.Context, url string, method string, params interface{}) (*http.Request, error) {
+func NewRequestWithContext(ctx context.Context, url string, method string, params interface{}) (*http.Request, error) {
 
 	call := &clientCall{
 		Version: "2.0",
