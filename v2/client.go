@@ -125,6 +125,7 @@ func (client *Client) Do(req *http.Request, result interface{}) error {
 
 	methodName, ok := getMethod(ctx)
 	if ok {
+		span.SetName(methodName)
 		span.AddAttributes(
 			trace.StringAttribute("rpc.method", methodName),
 		)
