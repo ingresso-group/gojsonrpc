@@ -130,7 +130,7 @@ func (client *Client) Do(req *http.Request, result interface{}) error {
 		)
 	}
 
-	return client.do(req, result)
+	return client.do(req.WithContext(ctx), result)
 }
 
 // Batch executes a batch request and attempts to deserialise the response to
