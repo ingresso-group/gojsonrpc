@@ -162,34 +162,9 @@ func (client *Client) Call(url string, method string, params interface{}, result
 	return client.do(req, result)
 }
 
-// NewRequest returns a pointer to a new http.Request containing the call in
-// the JSONRPC format.
-//
-// The request can then be executed with Client.Do.
+// NewRequest wraps NewRequestWithContext using the background context
 func NewRequest(url string, method string, params interface{}) (*http.Request, error) {
-
-	call := &clientCall{
-		Version: "2.0",
-		ID:      "1",
-		Method:  method,
-		Params:  params,
-	}
-
-	data, err := Marshal(call)
-
-	if err != nil {
-		return nil, err
-	}
-
-	buf := bytes.NewBuffer(data)
-
-	req, err := http.NewRequest(http.MethodPost, url, buf)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	return req, nil
+	return NewRequestWithContext(context.Background(), url, method, params)
 }
 
 // NewRequestWithContext returns a pointer to a new http.Request containing the call in
