@@ -98,6 +98,49 @@ func TestServeHTTP_batch(t *testing.T) {
 	assert.Nil(t, results[1].Error)
 }
 
+func TestServeHTTP_batch_multiId(t *testing.T) {
+	dispatcher := NewMapDispatcher()
+	dispatcher.Register("Add", func(resp *Response, call *Call, req *http.Request) {
+		// var params []int
+		// err := json.Unmarshal(call.Params, &params)
+
+		resp.Result = 7.0
+	})
+
+	server := httptest.NewServer(&Handler{dispatcher})
+	defer server.Close()
+
+	buf := bytes.NewBufferString(`[
+		{"jsonrpc": "2.0", "id": "5", "method": "Add", "params": [1, 2, 3]},
+		{"jsonrpc": "2.0", "id": "5", "method": "Add", "params": [1, 2, 3]}
+	]`)
+
+	response, _ := http.Post(server.URL, "application/json", buf)
+
+	assert.Equal(t, "application/json", response.Header.Get("Content-Type"))
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+
+	body, _ := ioutil.ReadAll(response.Body)
+	var results []Response
+	err := json.Unmarshal(body, &results)
+
+	if !assert.Nil(t, err) {
+		t.FailNow()
+	}
+
+	assert.Equal(t, "2.0", results[0].Version)
+	assert.Equal(t, "5", results[0].ID)
+	assert.Equal(t, 7.0, results[0].Result)
+	assert.Nil(t, results[0].Error)
+
+	assert.Equal(t, "2.0", results[1].Version)
+	assert.Equal(t, "5", results[1].ID)
+	assert.Nil(t, results[1].Result)
+	assert.Equal(t, -32600, results[1].Error.Code)
+	assert.Equal(t, "The 'id' element is not unique", results[1].Error.Message)
+	assert.Nil(t, results[1].Error.Data)
+}
+
 func TestServeHTTP_with_get_request(t *testing.T) {
 	dispatcher := &fakeDispatcher{}
 	handler := &Handler{dispatcher}

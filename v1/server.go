@@ -257,7 +257,6 @@ func (service *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			var skip_this_one = false
 			for _, b := range known_ids {
 				if request.Id == b {
-					fmt.Println("about to error on id", b, "is the same as ", request.Id, "with Method", request.Method)
 					response.Error = &responseError{
 						Code:    -32600,
 						Message: "The 'id' element is not unique",
@@ -276,9 +275,7 @@ func (service *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			known_ids = append(known_ids, response.Id)
 		}
 
-		fmt.Println("about to wait")
 		wg.Wait()
-		fmt.Println("finished waiting")
 
 		if single && len(responses) == 1 {
 			data, err = json.Marshal(responses[0])

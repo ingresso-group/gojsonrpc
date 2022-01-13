@@ -81,11 +81,24 @@ func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var responses []*Response
 	var wg sync.WaitGroup
 
+	known_ids := make([]interface{}, 0)
 	for _, call := range calls {
-		wg.Add(1)
 		resp := NewResponse(call)
-		go handler.dispatch(resp, call, r, &wg)
+		var skip_this_one = false
+		for _, b := range known_ids {
+			if call.ID == b {
+				resp.Error = &Error{}
+				resp.Error.Code = -32600
+				resp.Error.Message = "The 'id' element is not unique"
+				skip_this_one = true
+			}
+		}
+		if !skip_this_one {
+			wg.Add(1)
+			go handler.dispatch(resp, call, r, &wg)
+		}
 		responses = append(responses, resp)
+		known_ids = append(known_ids, call.ID)
 	}
 
 	wg.Wait()
