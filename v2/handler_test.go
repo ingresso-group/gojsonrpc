@@ -141,6 +141,98 @@ func TestServeHTTP_batch_multiId(t *testing.T) {
 	assert.Nil(t, results[1].Error.Data)
 }
 
+func TestServeHTTP_batch_someIds(t *testing.T) {
+	dispatcher := NewMapDispatcher()
+	dispatcher.Register("Add", func(resp *Response, call *Call, req *http.Request) {
+		// var params []int
+		// err := json.Unmarshal(call.Params, &params)
+
+		resp.Result = 7.0
+	})
+
+	server := httptest.NewServer(&Handler{dispatcher})
+	defer server.Close()
+
+	buf := bytes.NewBufferString(`[
+		{"jsonrpc": "2.0", "id": "1", "method": "Add", "params": [1, 2, 3]},
+		{"jsonrpc": "2.0", "id": "2", "method": "Add", "params": [1, 2, 3]},
+		{"jsonrpc": "2.0", "method": "Add", "params": [1, 2, 3]},
+		{"jsonrpc": "2.0", "id": "3", "method": "Add", "params": [1, 2, 3]}
+	]`)
+
+	response, _ := http.Post(server.URL, "application/json", buf)
+
+	assert.Equal(t, "application/json", response.Header.Get("Content-Type"))
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+
+	body, _ := ioutil.ReadAll(response.Body)
+	var results []Response
+	err := json.Unmarshal(body, &results)
+
+	if !assert.Nil(t, err) {
+		t.FailNow()
+	}
+
+	assert.Equal(t, "2.0", results[0].Version)
+	assert.Equal(t, "1", results[0].ID)
+	assert.Equal(t, 7.0, results[0].Result)
+	assert.Nil(t, results[0].Error)
+
+	assert.Equal(t, "2.0", results[1].Version)
+	assert.Equal(t, "2", results[1].ID)
+	assert.Equal(t, 7.0, results[1].Result)
+	assert.Nil(t, results[1].Error)
+
+	assert.Equal(t, "2.0", results[2].Version)
+	assert.Nil(t, results[2].ID)
+	assert.Equal(t, 7.0, results[2].Result)
+	assert.Nil(t, results[2].Error)
+
+	assert.Equal(t, "2.0", results[3].Version)
+	assert.Equal(t, "3", results[3].ID)
+	assert.Equal(t, 7.0, results[3].Result)
+	assert.Nil(t, results[3].Error)
+
+}
+
+func TestServeHTTP_batch_NoId(t *testing.T) {
+	dispatcher := NewMapDispatcher()
+	dispatcher.Register("Add", func(resp *Response, call *Call, req *http.Request) {
+		resp.Result = 7.0
+	})
+
+	server := httptest.NewServer(&Handler{dispatcher})
+	defer server.Close()
+
+	buf := bytes.NewBufferString(`[
+		{"jsonrpc": "2.0", "method": "Add", "params": [1, 2, 3]},
+		{"jsonrpc": "2.0", "method": "Add", "params": [1, 2, 3]}
+	]`)
+
+	response, _ := http.Post(server.URL, "application/json", buf)
+
+	assert.Equal(t, "application/json", response.Header.Get("Content-Type"))
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+
+	body, _ := ioutil.ReadAll(response.Body)
+	var results []Response
+	err := json.Unmarshal(body, &results)
+
+	if !assert.Nil(t, err) {
+		t.FailNow()
+	}
+
+	assert.Equal(t, "2.0", results[0].Version)
+	assert.Equal(t, 7.0, results[0].Result)
+	assert.Nil(t, results[0].ID)
+	assert.Nil(t, results[0].Error)
+
+	assert.Equal(t, "2.0", results[1].Version)
+	assert.Equal(t, 7.0, results[1].Result)
+	assert.Nil(t, results[1].ID)
+	assert.Nil(t, results[1].Error)
+}
+
 func TestServeHTTP_with_get_request(t *testing.T) {
 	dispatcher := &fakeDispatcher{}
 	handler := &Handler{dispatcher}

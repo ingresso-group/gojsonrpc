@@ -85,12 +85,14 @@ func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, call := range calls {
 		resp := NewResponse(call)
 		var skip_this_one = false
-		for _, b := range known_ids {
-			if call.ID == b {
-				resp.Error = &Error{}
-				resp.Error.Code = -32600
-				resp.Error.Message = "The 'id' element is not unique"
-				skip_this_one = true
+		if call.ID != nil {
+			for _, b := range known_ids {
+				if call.ID == b {
+					resp.Error = &Error{}
+					resp.Error.Code = -32600
+					resp.Error.Message = "The 'id' element is not unique"
+					skip_this_one = true
+				}
 			}
 		}
 		if !skip_this_one {
@@ -98,7 +100,9 @@ func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			go handler.dispatch(resp, call, r, &wg)
 		}
 		responses = append(responses, resp)
-		known_ids = append(known_ids, call.ID)
+		if call.ID != nil {
+			known_ids = append(known_ids, call.ID)
+		}
 	}
 
 	wg.Wait()
