@@ -248,20 +248,37 @@ func (service *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		noRequests := len(requests)
 
+		known_ids := []string{}
 		for _, request := range requests {
 			response := new(responseData)
 			response.Id = request.Id
 			response.Version = "2.0"
 			responses = append(responses, response)
-			wg.Add(1)
-			if noRequests == 1 {
-				service.handleCall(request, response, r, &wg, start)
-			} else {
-				go service.handleCall(request, response, r, &wg, start)
+			var skip_this_one = false
+			for _, b := range known_ids {
+				if request.Id == b {
+					fmt.Println("about to error on id", b, "is the same as ", request.Id, "with Method", request.Method)
+					response.Error = &responseError{
+						Code:    -32600,
+						Message: "The 'id' element is not unique",
+					}
+					skip_this_one = true
+				}
 			}
+			if !skip_this_one {
+				wg.Add(1)
+				if noRequests == 1 {
+					service.handleCall(request, response, r, &wg, start)
+				} else {
+					go service.handleCall(request, response, r, &wg, start)
+				}
+			}
+			known_ids = append(known_ids, response.Id)
 		}
 
+		fmt.Println("about to wait")
 		wg.Wait()
+		fmt.Println("finished waiting")
 
 		if single && len(responses) == 1 {
 			data, err = json.Marshal(responses[0])
