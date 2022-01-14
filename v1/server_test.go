@@ -3,10 +3,11 @@ package jsonrpc
 import (
 	"bytes"
 	"fmt"
-	. "github.com/smartystreets/goconvey/convey"
 	"io"
 	"net/http"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 type fakeParams struct {
@@ -243,6 +244,53 @@ func TestServiceServeHTTP(t *testing.T) {
 
 				Convey("Then the response body should be the results of the request", func() {
 					expected := `[{"id":"1","jsonrpc":"2.0","result":{"I LIKE BEANS":"foo","bar":"I LIKE 10 BARS"}},{"id":"2","jsonrpc":"2.0","result":{"BEANS I LIKE":"foo","bar":"I LIKE 99 BARS"}}]`
+					So(response.Body(), ShouldEqual, expected)
+				})
+
+			})
+		})
+		Convey("Given an http request containing multiple JSONRPC requests with the same id", func() {
+			request := http.Request{
+				Method: "POST",
+				Body: fakeBody{bytes.NewBufferString(`[
+						{
+							"id": "504",
+							"jsonrpc": "2.0",
+							"method": "FooBar",
+							"params": {
+								"foo": "I LIKE BEANS",
+								"bar": 10
+							}
+						},
+						{
+							"id": "504",
+							"jsonrpc": "2.0",
+							"method": "BarFoo",
+							"params": {
+								"foo": "BEANS I LIKE",
+								"bar": 99
+							}
+						}
+					]
+				`)},
+			}
+
+			Convey("When the http request is served", func() {
+				response := fakeResponse{
+					headers: map[string][]string{},
+				}
+				service.ServeHTTP(&response, &request)
+
+				Convey("Then the response should have the 200 status code", func() {
+					So(response.status, ShouldEqual, http.StatusOK)
+				})
+
+				Convey("Then the response should have the json content type", func() {
+					So(response.Header().Get("Content-Type"), ShouldEqual, "application/json")
+				})
+
+				Convey("Then the response body should be the results of the request", func() {
+					expected := `[{"id":"504","jsonrpc":"2.0","result":{"I LIKE BEANS":"foo","bar":"I LIKE 10 BARS"}},{"id":"504","jsonrpc":"2.0","error":{"code":-32600,"message":"The 'id' element is not unique"}}]`
 					So(response.Body(), ShouldEqual, expected)
 				})
 

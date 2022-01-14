@@ -1,0 +1,21 @@
+version: 2
+jobs:
+  test:
+    docker:
+      - image: cimg/go:1.17
+    working_directory: ~/go/src/github.com/ingresso-group/gojsonrpc
+    steps:
+      - checkout
+      - run:
+          name: setup
+          command: make setup
+      - run:
+        - cd v1 ; richgo test ./...
+      - run:
+        - cd v2 ; richgo test ./...
+workflows:
+  version: 1 
+  test:
+    jobs:
+      - test
+

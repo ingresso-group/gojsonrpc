@@ -2,6 +2,7 @@ package jsonrpc
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"sync"
@@ -33,7 +34,7 @@ func serverError(w http.ResponseWriter, message string, code int) {
 	resp, err := Marshal(&result)
 
 	if err != nil {
-		w.Write([]byte(`{"jsonrpc": "2.0", "id": null, "error": {"code": -32603, "message": "something went wrong!"}}`))
+		w.Write([]byte(fmt.Sprintf(`{"jsonrpc": "2.0", "id": null, "error": {"code": %d, "message": "something went wrong!"}}`, CodeInternalError)))
 		return
 	}
 
@@ -81,11 +82,24 @@ func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var responses []*Response
 	var wg sync.WaitGroup
 
+	known_ids := make([]interface{}, 0)
+CALLS_LOOP:
 	for _, call := range calls {
-		wg.Add(1)
 		resp := NewResponse(call)
-		go handler.dispatch(resp, call, r, &wg)
 		responses = append(responses, resp)
+		if call.ID != nil {
+			for _, b := range known_ids {
+				if call.ID == b {
+					resp.Error = &Error{}
+					resp.Error.Code = CodeInvalidRequest
+					resp.Error.Message = "The 'id' element is not unique"
+					continue CALLS_LOOP
+				}
+			}
+		}
+		wg.Add(1)
+		go handler.dispatch(resp, call, r, &wg)
+		known_ids = append(known_ids, call.ID)
 	}
 
 	wg.Wait()
