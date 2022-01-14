@@ -10,10 +10,13 @@ jobs:
           name: setup
           command: make setup
       - run:
-        - richgo test ./...
+          name: test v1
+          command: cd v1 ; richgo test ./...
+      - run:
+          name: test v2
+          command: cd v2 ; richgo test ./...
 workflows:
-  version: 1 
+  version: 2 
   test:
     jobs:
       - test
-
