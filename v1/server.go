@@ -153,8 +153,8 @@ func (service *Service) handleCall(request requestData, response *responseData, 
 		}
 
 		response.Result = result
-		end := time.Now()
-		fmt.Printf("method %s responded in %s\n", request.Method, end.Sub(start))
+		// end := time.Now()
+		// fmt.Printf("method %s responded in %s\n", request.Method, end.Sub(start))
 		return
 	}, map[string]string{"method": request.Method})
 	if errID != "" {
@@ -306,11 +306,11 @@ func (service *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		w.WriteHeader(http.StatusOK)
 		w.Write(data)
-		end := time.Now()
-		fmt.Printf(
-			"request from %s (%s) processed in %s\n",
-			r.UserAgent(), r.RemoteAddr, end.Sub(start),
-		)
+		// end := time.Now()
+		// fmt.Printf(
+		// 	"request from %s (%s) processed in %s\n",
+		// 	r.UserAgent(), r.RemoteAddr, end.Sub(start),
+		// )
 	}, nil)
 	if errID != "" {
 		w.WriteHeader(http.StatusInternalServerError)
