@@ -1,6 +1,7 @@
 package jsonrpc
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -19,14 +20,14 @@ type responseError struct {
 }
 
 type requestData struct {
-	Id      string          `json:"id"`
+	Id      json.RawMessage `json:"id"`
 	Version string          `json:"jsonrpc"`
 	Params  json.RawMessage `json:"params"`
 	Method  string          `json:"method"`
 }
 
 type responseData struct {
-	Id      string         `json:"id,omitempty"`
+	Id      json.RawMessage `json:"id,omitempty"`
 	Version string         `json:"jsonrpc"`
 	Result  interface{}    `json:"result,omitempty"`
 	Error   *responseError `json:"error,omitempty"`
@@ -257,7 +258,7 @@ func (service *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		noRequests := len(requests)
 
-		known_ids := []string{}
+		known_ids := []json.RawMessage{}
 
 	REQUESTS_LOOP:
 		for _, request := range requests {
@@ -266,7 +267,7 @@ func (service *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			response.Version = "2.0"
 			responses = append(responses, response)
 			for _, b := range known_ids {
-				if request.Id == b {
+				if bytes.Equal(request.Id, b) {
 					response.Error = &responseError{
 						Code:    CodeInvalidRequest,
 						Message: "The 'id' element is not unique",
