@@ -202,6 +202,38 @@ func TestServiceServeHTTP(t *testing.T) {
 
 			})
 		})
+		Convey("Given an http request containing a JSONRPC request with a numeric id", func() {
+			request := http.Request{
+				Method: "POST",
+				Body: fakeBody{bytes.NewBufferString(`{
+					"id": 42,
+					"jsonrpc": "2.0",
+					"method": "FooBar",
+					"params": {
+						"foo": "I LIKE BEANS",
+						"bar": 10
+					}
+				}`)},
+			}
+
+			Convey("When the http request is served", func() {
+				response := fakeResponse{headers: map[string][]string{}}
+				service.ServeHTTP(&response, &request)
+
+				Convey("Then the response should have the 200 status code", func() {
+					So(response.status, ShouldEqual, http.StatusOK)
+				})
+
+				Convey("Then the response should have the json content type", func() {
+					So(response.Header().Get("Content-Type"), ShouldEqual, "application/json")
+				})
+
+				Convey("Then the response should echo the numeric id", func() {
+					expected := `{"id":42,"jsonrpc":"2.0","result":{"I LIKE BEANS":"foo","bar":"I LIKE 10 BARS"}}`
+					So(response.Body(), ShouldEqual, expected)
+				})
+			})
+		})
 		Convey("Given an http request containing multiple JSONRPC requests", func() {
 			request := http.Request{
 				Method: "POST",
