@@ -1,12 +1,14 @@
 module github.com/ingresso-group/gojsonrpc/v2
 
-go 1.11
+go 1.25.0
+
+require github.com/stretchr/testify v1.11.1
 
 require (
-	github.com/certifi/gocertifi v0.0.0-20190415143156-92f724a62f3e // indirect
-	github.com/getsentry/raven-go v0.2.0
-	github.com/pkg/errors v0.8.1 // indirect
-	github.com/prometheus/client_golang v0.9.2
-	github.com/smartystreets/goconvey v0.0.0-20190330032615-68dc04aab96a
-	github.com/stretchr/testify v1.3.0
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/kr/pretty v0.3.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/rogpeppe/go-internal v1.10.0 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
